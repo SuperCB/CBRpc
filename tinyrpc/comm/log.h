@@ -1,232 +1,237 @@
 #ifndef TINYRPC_COMM_LOG_H
 #define TINYRPC_COMM_LOG_H
 
-#include <sstream>
-#include <sstream>
-#include <time.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/syscall.h>
-#include <pthread.h>
-#include <unistd.h>
+#include "tinyrpc/comm/config.h"
+#include "tinyrpc/net/mutex.h"
 #include <memory>
-#include <vector>
+#include <pthread.h>
 #include <queue>
 #include <semaphore.h>
-#include "tinyrpc/net/mutex.h"
-#include "tinyrpc/comm/config.h"
-
+#include <sstream>
+#include <sys/syscall.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+#include <vector>
 
 namespace tinyrpc {
 
-extern tinyrpc::Config::ptr gRpcConfig;
-
 template<typename... Args>
-std::string formatString(const char* str, Args&&... args) {
+std::string formatString(const char* str, Args&&... args)
+{
 
-  int size = snprintf(nullptr, 0, str, args...);
+    int size = snprintf(nullptr, 0, str, args...);
 
-  std::string result;
-  if (size > 0) {
-    result.resize(size);
-    snprintf(&result[0], size + 1, str, args...);
-  }
+    std::string result;
+    if (size > 0) {
+        result.resize(size);
+        snprintf(&result[0], size + 1, str, args...);
+    }
 
-  return result;
+    return result;
 }
 
+#define DebugLog                                                                                                       \
+    if (tinyrpc::OpenLog() && tinyrpc::LogLevel::DEBUG >= tinyrpc::gRpcConfig->m_log_level)                            \
+    tinyrpc::LogTmp(tinyrpc::LogEvent::ptr(new tinyrpc::LogEvent(                                                      \
+                        tinyrpc::LogLevel::DEBUG, __FILE__, __LINE__, __func__, tinyrpc::LogType::RPC_LOG)))           \
+        .getStringStream()
 
-#define DebugLog \
-	if (tinyrpc::OpenLog() && tinyrpc::LogLevel::DEBUG >= tinyrpc::gRpcConfig->m_log_level) \
-		tinyrpc::LogTmp(tinyrpc::LogEvent::ptr(new tinyrpc::LogEvent(tinyrpc::LogLevel::DEBUG, __FILE__, __LINE__, __func__, tinyrpc::LogType::RPC_LOG))).getStringStream()
+#define InfoLog                                                                                                        \
+    if (tinyrpc::OpenLog() && tinyrpc::LogLevel::INFO >= tinyrpc::gRpcConfig->m_log_level)                             \
+    tinyrpc::LogTmp(tinyrpc::LogEvent::ptr(new tinyrpc::LogEvent(                                                      \
+                        tinyrpc::LogLevel::INFO, __FILE__, __LINE__, __func__, tinyrpc::LogType::RPC_LOG)))            \
+        .getStringStream()
 
-#define InfoLog \
-	if (tinyrpc::OpenLog() && tinyrpc::LogLevel::INFO >= tinyrpc::gRpcConfig->m_log_level) \
-		tinyrpc::LogTmp(tinyrpc::LogEvent::ptr(new tinyrpc::LogEvent(tinyrpc::LogLevel::INFO, __FILE__, __LINE__, __func__, tinyrpc::LogType::RPC_LOG))).getStringStream()
+#define WarnLog                                                                                                        \
+    if (tinyrpc::OpenLog() && tinyrpc::LogLevel::WARN >= tinyrpc::gRpcConfig->m_log_level)                             \
+    tinyrpc::LogTmp(tinyrpc::LogEvent::ptr(new tinyrpc::LogEvent(                                                      \
+                        tinyrpc::LogLevel::WARN, __FILE__, __LINE__, __func__, tinyrpc::LogType::RPC_LOG)))            \
+        .getStringStream()
 
-#define WarnLog \
-	if (tinyrpc::OpenLog() && tinyrpc::LogLevel::WARN >= tinyrpc::gRpcConfig->m_log_level) \
-		tinyrpc::LogTmp(tinyrpc::LogEvent::ptr(new tinyrpc::LogEvent(tinyrpc::LogLevel::WARN, __FILE__, __LINE__, __func__, tinyrpc::LogType::RPC_LOG))).getStringStream()
+#define ErrorLog                                                                                                       \
+    if (tinyrpc::OpenLog() && tinyrpc::LogLevel::ERROR >= tinyrpc::gRpcConfig->m_log_level)                            \
+    tinyrpc::LogTmp(tinyrpc::LogEvent::ptr(new tinyrpc::LogEvent(                                                      \
+                        tinyrpc::LogLevel::ERROR, __FILE__, __LINE__, __func__, tinyrpc::LogType::RPC_LOG)))           \
+        .getStringStream()
 
-#define ErrorLog \
-	if (tinyrpc::OpenLog() && tinyrpc::LogLevel::ERROR >= tinyrpc::gRpcConfig->m_log_level) \
-		tinyrpc::LogTmp(tinyrpc::LogEvent::ptr(new tinyrpc::LogEvent(tinyrpc::LogLevel::ERROR, __FILE__, __LINE__, __func__, tinyrpc::LogType::RPC_LOG))).getStringStream()
+#define AppDebugLog(str, ...)                                                                                          \
+    if (tinyrpc::OpenLog() && tinyrpc::LogLevel::DEBUG >= tinyrpc::gRpcConfig->m_app_log_level) {                      \
+        tinyrpc::Logger::GetLogger()->pushAppLog(                                                                      \
+            tinyrpc::LogEvent(tinyrpc::LogLevel::DEBUG, __FILE__, __LINE__, __func__, tinyrpc::LogType::APP_LOG)       \
+                .toString()                                                                                            \
+            + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t"                                     \
+            + tinyrpc::formatString(str, ##__VA_ARGS__) + "\n");                                                       \
+    }
 
+#define AppInfoLog(str, ...)                                                                                           \
+    if (tinyrpc::OpenLog() && tinyrpc::LogLevel::INFO >= tinyrpc::gRpcConfig->m_app_log_level) {                       \
+        tinyrpc::Logger::GetLogger()->pushAppLog(                                                                      \
+            tinyrpc::LogEvent(tinyrpc::LogLevel::INFO, __FILE__, __LINE__, __func__, tinyrpc::LogType::APP_LOG)        \
+                .toString()                                                                                            \
+            + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t"                                     \
+            + tinyrpc::formatString(str, ##__VA_ARGS__) + "\n");                                                       \
+    }
 
-#define AppDebugLog(str, ...) \
-  if (tinyrpc::OpenLog() && tinyrpc::LogLevel::DEBUG >= tinyrpc::gRpcConfig->m_app_log_level) \
-  { \
-    tinyrpc::Logger::GetLogger()->pushAppLog(tinyrpc::LogEvent(tinyrpc::LogLevel::DEBUG, __FILE__, __LINE__, __func__, tinyrpc::LogType::APP_LOG).toString() \
-      + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + tinyrpc::formatString(str, ##__VA_ARGS__) + "\n");\
-  } \
+#define AppWarnLog(str, ...)                                                                                           \
+    if (tinyrpc::OpenLog() && tinyrpc::LogLevel::WARN >= tinyrpc::gRpcConfig->m_app_log_level) {                       \
+        tinyrpc::Logger::GetLogger()->pushAppLog(                                                                      \
+            tinyrpc::LogEvent(tinyrpc::LogLevel::WARN, __FILE__, __LINE__, __func__, tinyrpc::LogType::APP_LOG)        \
+                .toString()                                                                                            \
+            + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t"                                     \
+            + tinyrpc::formatString(str, ##__VA_ARGS__) + "\n");                                                       \
+    }
 
-#define AppInfoLog(str, ...) \
-  if (tinyrpc::OpenLog() && tinyrpc::LogLevel::INFO>= tinyrpc::gRpcConfig->m_app_log_level) \
-  { \
-    tinyrpc::Logger::GetLogger()->pushAppLog(tinyrpc::LogEvent(tinyrpc::LogLevel::INFO, __FILE__, __LINE__, __func__, tinyrpc::LogType::APP_LOG).toString() \
-      + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + tinyrpc::formatString(str, ##__VA_ARGS__) + "\n");\
-  } \
-
-#define AppWarnLog(str, ...) \
-  if (tinyrpc::OpenLog() && tinyrpc::LogLevel::WARN>= tinyrpc::gRpcConfig->m_app_log_level) \
-  { \
-    tinyrpc::Logger::GetLogger()->pushAppLog(tinyrpc::LogEvent(tinyrpc::LogLevel::WARN, __FILE__, __LINE__, __func__, tinyrpc::LogType::APP_LOG).toString() \
-      + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + tinyrpc::formatString(str, ##__VA_ARGS__) + "\n");\
-  } \
-
-#define AppErrorLog(str, ...) \
-  if (tinyrpc::OpenLog() && tinyrpc::LogLevel::ERROR>= tinyrpc::gRpcConfig->m_app_log_level) \
-  { \
-    tinyrpc::Logger::GetLogger()->pushAppLog(tinyrpc::LogEvent(tinyrpc::LogLevel::ERROR, __FILE__, __LINE__, __func__, tinyrpc::LogType::APP_LOG).toString() \
-      + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + tinyrpc::formatString(str, ##__VA_ARGS__) + "\n");\
-  } \
-
-
+#define AppErrorLog(str, ...)                                                                                          \
+    if (tinyrpc::OpenLog() && tinyrpc::LogLevel::ERROR >= tinyrpc::gRpcConfig->m_app_log_level) {                      \
+        tinyrpc::Logger::GetLogger()->pushAppLog(                                                                      \
+            tinyrpc::LogEvent(tinyrpc::LogLevel::ERROR, __FILE__, __LINE__, __func__, tinyrpc::LogType::APP_LOG)       \
+                .toString()                                                                                            \
+            + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t"                                     \
+            + tinyrpc::formatString(str, ##__VA_ARGS__) + "\n");                                                       \
+    }
 
 enum LogType {
-	RPC_LOG = 1,
-	APP_LOG = 2,
+    RPC_LOG = 1,
+    APP_LOG = 2,
 };
 
 pid_t gettid();
 
-LogLevel stringToLevel(const std::string& str);
+LogLevel    stringToLevel(const std::string& str);
 std::string levelToString(LogLevel level);
 
 bool OpenLog();
 
 class LogEvent {
 
- public:
- 	
-	typedef std::shared_ptr<LogEvent> ptr;
-	LogEvent(LogLevel level, const char* file_name, int line, const char* func_name, LogType type);
+public:
+    typedef std::shared_ptr<LogEvent> ptr;
+    LogEvent(LogLevel level, const char* file_name, int line, const char* func_name, LogType type);
 
-	~LogEvent();
+    ~LogEvent();
 
-	std::stringstream& getStringStream();
+    std::stringstream& getStringStream();
 
-	std::string toString();
+    std::string toString();
 
-	void log();
+    void log();
 
+private:
+    // uint64_t m_timestamp;
+    timeval  m_timeval;
+    LogLevel m_level;
+    pid_t    m_pid{0};
+    pid_t    m_tid{0};
+    int      m_cor_id{0};
 
- private:
-		
-	// uint64_t m_timestamp;
-	timeval m_timeval;
-	LogLevel m_level;
-	pid_t m_pid {0};
-	pid_t m_tid {0};
-	int m_cor_id {0};
+    const char* m_file_name;
+    int         m_line{0};
+    const char* m_func_name;
+    LogType     m_type;
+    std::string m_msg_no;
 
-	const char* m_file_name;
-	int m_line {0};
-	const char* m_func_name;
-	LogType m_type;
-	std::string m_msg_no;
-
-	std::stringstream m_ss;
+    std::stringstream m_ss;
 };
 
-
 class LogTmp {
- 
- public:
-	explicit LogTmp(LogEvent::ptr event);
 
-	~LogTmp();
+public:
+    explicit LogTmp(LogEvent::ptr event);
 
-	std::stringstream& getStringStream();
+    ~LogTmp();
 
- private:
-	LogEvent::ptr m_event;
+    std::stringstream& getStringStream();
 
+private:
+    LogEvent::ptr m_event;
 };
 
 class AsyncLogger {
- public:
-  typedef std::shared_ptr<AsyncLogger> ptr;
+public:
+    typedef std::shared_ptr<AsyncLogger> ptr;
 
-	AsyncLogger(const char* file_name, const char* file_path, int max_size, LogType logtype);
-	~AsyncLogger();
+    AsyncLogger(const char* file_name, const char* file_path, int max_size, LogType logtype);
+    ~AsyncLogger();
 
-	void push(std::vector<std::string>& buffer);
+    void push(std::vector<std::string>& buffer);
 
-	void flush();
+    void flush();
 
-	static void* excute(void*);
+    static void* excute(void*);
 
-	void stop();
+    void stop();
 
- public:
-	std::queue<std::vector<std::string>> m_tasks;
+public:
+    std::queue<std::vector<std::string>> m_tasks;
 
- private:
-	const char* m_file_name;
-	const char* m_file_path;
-	int m_max_size {0};
-	LogType m_log_type;
-	int m_no {0};
-	bool m_need_reopen {false};
-	FILE* m_file_handle {nullptr};
-	std::string m_date;
+private:
+    const char* m_file_name;
+    const char* m_file_path;
+    int         m_max_size{0};
+    LogType     m_log_type;
+    int         m_no{0};
+    bool        m_need_reopen{false};
+    FILE*       m_file_handle{nullptr};
+    std::string m_date;
 
- 	Mutex m_mutex;
-  pthread_cond_t m_condition;
-	bool m_stop {false};
+    Mutex          m_mutex;
+    pthread_cond_t m_condition;
+    bool           m_stop{false};
 
- public:
-  pthread_t m_thread;
-	sem_t m_semaphore;
-
+public:
+    pthread_t m_thread;
+    sem_t     m_semaphore;
 };
 
 class Logger {
 
- public:
-	static Logger* GetLogger();
- public:
-  typedef std::shared_ptr<Logger> ptr;
+public:
+    static Logger* GetLogger();
 
-	Logger();
-	~Logger();
+public:
+    typedef std::shared_ptr<Logger> ptr;
 
-	void init(const char* file_name, const char* file_path, int max_size, int sync_inteval);
+    Logger();
+    ~Logger();
 
-	void pushRpcLog(const std::string& log_msg);
-	void pushAppLog(const std::string& log_msg);
-	void loopFunc();
+    void init(const char* file_name, const char* file_path, int max_size, int sync_inteval);
 
-	void flush();
+    void pushRpcLog(const std::string& log_msg);
+    void pushAppLog(const std::string& log_msg);
+    void loopFunc();
 
-	void start();
+    void flush();
 
-	AsyncLogger::ptr getAsyncLogger() {
-		return m_async_rpc_logger;
-	}
+    void start();
 
-	AsyncLogger::ptr getAsyncAppLogger() {
-		return m_async_app_logger;
-	}
+    AsyncLogger::ptr getAsyncLogger()
+    {
+        return m_async_rpc_logger;
+    }
 
- public:
-	std::vector<std::string> m_buffer;
-	std::vector<std::string> m_app_buffer;
+    AsyncLogger::ptr getAsyncAppLogger()
+    {
+        return m_async_app_logger;
+    }
 
- private:
- 	Mutex m_app_buff_mutex;
- 	Mutex m_buff_mutex;
-	bool m_is_init {false};
-	AsyncLogger::ptr m_async_rpc_logger;
-	AsyncLogger::ptr m_async_app_logger;
+public:
+    std::vector<std::string> m_buffer;
+    std::vector<std::string> m_app_buffer;
 
-	int m_sync_inteval {0};
+private:
+    Mutex            m_app_buff_mutex;
+    Mutex            m_buff_mutex;
+    bool             m_is_init{false};
+    AsyncLogger::ptr m_async_rpc_logger;
+    AsyncLogger::ptr m_async_app_logger;
 
+    int m_sync_inteval{0};
 };
 
 void Exit(int code);
 
-}
+}  // namespace tinyrpc
 
 #endif
