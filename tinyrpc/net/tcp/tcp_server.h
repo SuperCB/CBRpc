@@ -1,126 +1,119 @@
 #ifndef TINYRPC_NET_TCP_TCP_SERVER_H
 #define TINYRPC_NET_TCP_TCP_SERVER_H
 
-#include <map>
-#include <google/protobuf/service.h>
-#include "tinyrpc/net/reactor.h"
-#include "tinyrpc/net/fd_event.h"
-#include "tinyrpc/net/timer.h"
-#include "tinyrpc/net/net_address.h"
-#include "tinyrpc/net/tcp/tcp_connection.h"
-#include "tinyrpc/net/tcp/io_thread.h"
-#include "tinyrpc/net/tcp/tcp_connection_time_wheel.h"
 #include "tinyrpc/net/abstract_codec.h"
 #include "tinyrpc/net/abstract_dispatcher.h"
+#include "tinyrpc/net/fd_event.h"
 #include "tinyrpc/net/http/http_dispatcher.h"
 #include "tinyrpc/net/http/http_servlet.h"
-
+#include "tinyrpc/net/net_address.h"
+#include "tinyrpc/net/reactor.h"
+#include "tinyrpc/net/tcp/io_thread.h"
+#include "tinyrpc/net/tcp/tcp_connection.h"
+#include "tinyrpc/net/tcp/tcp_connection_time_wheel.h"
+#include "tinyrpc/net/timer.h"
+#include <google/protobuf/service.h>
+#include <map>
 
 namespace tinyrpc {
 
 class TcpAcceptor {
 
- public:
+public:
+    typedef std::shared_ptr<TcpAcceptor> ptr;
+    TcpAcceptor(NetAddress::ptr net_addr);
 
-  typedef std::shared_ptr<TcpAcceptor> ptr;
-  TcpAcceptor(NetAddress::ptr net_addr);
+    void init();
 
-  void init();
+    int toAccept();
 
-  int toAccept();
+    ~TcpAcceptor();
 
-  ~TcpAcceptor();
+    NetAddress::ptr getPeerAddr()
+    {
+        return m_peer_addr;
+    }
 
-  NetAddress::ptr getPeerAddr() {
-    return m_peer_addr;
-  }
+    NetAddress::ptr geLocalAddr()
+    {
+        return m_local_addr;
+    }
 
-  NetAddress::ptr geLocalAddr() {
-    return m_local_addr;
-  }
- 
- private:
-  int m_family {-1};
-  int m_fd {-1};
+private:
+    int m_family{-1};
+    int m_fd{-1};
 
-  NetAddress::ptr m_local_addr {nullptr};
-  NetAddress::ptr m_peer_addr {nullptr};
-
+    NetAddress::ptr m_local_addr{nullptr};
+    NetAddress::ptr m_peer_addr{nullptr};
 };
-
 
 class TcpServer {
 
- public:
+public:
+    typedef std::shared_ptr<TcpServer> ptr;
 
-  typedef std::shared_ptr<TcpServer> ptr;
+    TcpServer(NetAddress::ptr addr, ProtocalType type = TinyPb_Protocal);
 
-	TcpServer(NetAddress::ptr addr, ProtocalType type = TinyPb_Protocal);
+    ~TcpServer();
 
-  ~TcpServer();
+    void start();
 
-  void start();
+    void addCoroutine(tinyrpc::Coroutine::ptr cor);
 
-  void addCoroutine(tinyrpc::Coroutine::ptr cor);
+    bool registerService(std::shared_ptr<google::protobuf::Service> service);
 
-  bool registerService(std::shared_ptr<google::protobuf::Service> service);
+    bool registerHttpServlet(const std::string& url_path, HttpServlet::ptr servlet);
 
-  bool registerHttpServlet(const std::string& url_path, HttpServlet::ptr servlet);
+    TcpConnection::ptr addClient(IOThread* io_thread, int fd);
 
-  TcpConnection::ptr addClient(IOThread* io_thread, int fd);
+    void freshTcpConnection(TcpTimeWheel::TcpConnectionSlot::ptr slot);
 
-  void freshTcpConnection(TcpTimeWheel::TcpConnectionSlot::ptr slot);
+public:
+    AbstractDispatcher::ptr getDispatcher();
 
+    AbstractCodeC::ptr getCodec();
 
- public:
-  AbstractDispatcher::ptr getDispatcher();
+    NetAddress::ptr getPeerAddr();
 
-  AbstractCodeC::ptr getCodec();
+    NetAddress::ptr getLocalAddr();
 
-  NetAddress::ptr getPeerAddr();
+    IOThreadPool::ptr getIOThreadPool();
 
-  NetAddress::ptr getLocalAddr();
+    TcpTimeWheel::ptr getTimeWheel();
 
-  IOThreadPool::ptr getIOThreadPool();
+private:
+    void MainAcceptCorFunc();
 
-  TcpTimeWheel::ptr getTimeWheel();
+    void ClearClientTimerFunc();
 
+private:
+    NetAddress::ptr m_addr;
 
- private:
-  void MainAcceptCorFunc();
+    TcpAcceptor::ptr m_acceptor;
 
-  void ClearClientTimerFunc();
+    int m_tcp_counts{0};
 
- private:
-  
-  NetAddress::ptr m_addr;
+    Reactor* m_main_reactor{nullptr};
 
-  TcpAcceptor::ptr m_acceptor;
+    bool m_is_stop_accept{false};
 
-  int m_tcp_counts {0};
+    Coroutine::ptr m_accept_cor;
 
-  Reactor* m_main_reactor {nullptr};
+    AbstractDispatcher::ptr m_dispatcher;
 
-  bool m_is_stop_accept {false};
+    AbstractCodeC::ptr m_codec;
 
-  Coroutine::ptr m_accept_cor;
-  
-  AbstractDispatcher::ptr m_dispatcher;
+    IOThreadPool::ptr m_io_pool;
 
-  AbstractCodeC::ptr m_codec;
+    ProtocalType m_protocal_type{TinyPb_Protocal};
 
-  IOThreadPool::ptr m_io_pool;
+    TcpTimeWheel::ptr m_time_wheel;
 
-  ProtocalType m_protocal_type {TinyPb_Protocal};
+    std::map<int, std::shared_ptr<TcpConnection>> m_clients;
 
-  TcpTimeWheel::ptr m_time_wheel;
-
-  std::map<int, std::shared_ptr<TcpConnection>> m_clients;
-
-  TimerEvent::ptr m_clear_clent_timer_event {nullptr};
-
+    TimerEvent::ptr m_clear_clent_timer_event{nullptr};
 };
 
-}
+}  // namespace tinyrpc
 
 #endif
