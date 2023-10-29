@@ -1,8 +1,6 @@
-#ifndef TINYRPC_COMM_LOG_H
-#define TINYRPC_COMM_LOG_H
-
-#include "tinyrpc/comm/config.h"
-#include "tinyrpc/net/mutex.h"
+#pragma once
+#include "comm/config.h"
+#include "net/mutex.h"
 #include <memory>
 #include <pthread.h>
 #include <queue>
@@ -16,7 +14,7 @@
 #include <vector>
 
 namespace tinyrpc {
-
+extern tinyrpc::Config::ptr gRpcConfig;
 template<typename... Args>
 std::string formatString(const char* str, Args&&... args)
 {
@@ -233,5 +231,3 @@ private:
 void Exit(int code);
 
 }  // namespace tinyrpc
-
-#endif

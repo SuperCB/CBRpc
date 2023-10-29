@@ -1,9 +1,9 @@
 #ifndef TINYRPC_NET_TCP_IO_THREAD_H
 #define TINYRPC_NET_TCP_IO_THREAD_H
 
-#include "tinyrpc/coroutine/coroutine.h"
-#include "tinyrpc/net/reactor.h"
-#include "tinyrpc/net/tcp/tcp_connection_time_wheel.h"
+#include "coroutine/coroutine.h"
+#include "net/reactor.h"
+#include "net/tcp/tcp_connection_time_wheel.h"
 #include <atomic>
 #include <functional>
 #include <map>

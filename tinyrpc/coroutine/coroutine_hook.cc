@@ -1,9 +1,9 @@
-#include "tinyrpc/coroutine/coroutine_hook.h"
-#include "tinyrpc/comm/log.h"
-#include "tinyrpc/coroutine/coroutine.h"
-#include "tinyrpc/net/fd_event.h"
-#include "tinyrpc/net/reactor.h"
-#include "tinyrpc/net/timer.h"
+#include "coroutine/coroutine_hook.h"
+#include "comm/log.h"
+#include "coroutine/coroutine.h"
+#include "net/fd_event.h"
+#include "net/reactor.h"
+#include "net/timer.h"
 #include <assert.h>
 #include <dlfcn.h>
 #include <fcntl.h>

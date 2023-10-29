@@ -1,7 +1,7 @@
-#include "tinyrpc/net/tcp/tcp_connection_time_wheel.h"
-#include "tinyrpc/net/tcp/abstract_slot.h"
-#include "tinyrpc/net/tcp/tcp_connection.h"
-#include "tinyrpc/net/timer.h"
+#include "net/tcp/tcp_connection_time_wheel.h"
+#include "net/tcp/abstract_slot.h"
+#include "net/tcp/tcp_connection.h"
+#include "net/timer.h"
 #include <queue>
 #include <vector>
 

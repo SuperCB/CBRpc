@@ -1,10 +1,8 @@
-#ifndef TINYRPC_NET_FD_EVNET_H
-#define TINYRPC_NET_FD_EVNET_H
-
+#pragma once
+#include "comm/log.h"
+#include "coroutine/coroutine.h"
 #include "mutex.h"
-#include "reactor.h"
-#include "tinyrpc/comm/log.h"
-#include "tinyrpc/coroutine/coroutine.h"
+#include "net/reactor.h"
 #include <assert.h>
 #include <functional>
 #include <memory>
@@ -96,5 +94,3 @@ private:
 };
 
 }  // namespace tinyrpc
-
-#endif

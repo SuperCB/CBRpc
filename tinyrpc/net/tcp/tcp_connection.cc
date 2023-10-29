@@ -1,13 +1,13 @@
-#include "tinyrpc/net/tcp/tcp_connection.h"
-#include "tinyrpc/coroutine/coroutine_hook.h"
-#include "tinyrpc/coroutine/coroutine_pool.h"
-#include "tinyrpc/net/tcp/abstract_slot.h"
-#include "tinyrpc/net/tcp/tcp_client.h"
-#include "tinyrpc/net/tcp/tcp_connection_time_wheel.h"
-#include "tinyrpc/net/tcp/tcp_server.h"
-#include "tinyrpc/net/timer.h"
-#include "tinyrpc/net/tinypb/tinypb_codec.h"
-#include "tinyrpc/net/tinypb/tinypb_data.h"
+#include "net/tcp/tcp_connection.h"
+#include "coroutine/coroutine_hook.h"
+#include "coroutine/coroutine_pool.h"
+#include "net/tcp/abstract_slot.h"
+#include "net/tcp/tcp_client.h"
+#include "net/tcp/tcp_connection_time_wheel.h"
+#include "net/tcp/tcp_server.h"
+#include "net/timer.h"
+#include "net/tinypb/tinypb_codec.h"
+#include "net/tinypb/tinypb_data.h"
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -61,9 +61,10 @@ void TcpConnection::setUpServer()
 
 void TcpConnection::registerToTimeWheel()
 {
-    auto                                 cb  = [](TcpConnection::ptr conn) { conn->shutdownConnection(); };
-    TcpTimeWheel::TcpConnectionSlot::ptr tmp = std::make_shared<AbstractSlot<TcpConnection>>(shared_from_this(), cb);
-    m_weak_slot                              = tmp;
+    auto                                 call_back = [](TcpConnection::ptr conn) { conn->shutdownConnection(); };
+    TcpTimeWheel::TcpConnectionSlot::ptr tmp =
+        std::make_shared<AbstractSlot<TcpConnection>>(this->shared_from_this(), call_back);
+    m_weak_slot = tmp;
     m_tcp_svr->freshTcpConnection(tmp);
 }
 
@@ -154,7 +155,7 @@ void TcpConnection::input()
                 continue;
             }
             else if (rt < read_count) {
-                DebugLog << "read_count > rt";
+                DebugLog << "read_count < rt";
                 // read all data in socket buffer, skip out loop
                 read_all = true;
                 break;
@@ -195,9 +196,6 @@ void TcpConnection::execute()
         if (m_codec->getProtocalType() == TinyPb_Protocal) {
             data = std::make_shared<TinyPbStruct>();
         }
-        else {
-            data = std::make_shared<HttpRequest>();
-        }
 
         m_codec->decode(m_read_buffer.get(), data.get());
         // DebugLog << "parse service_name=" << pb_struct.service_full_name;
@@ -233,7 +231,7 @@ void TcpConnection::output()
             break;
         }
 
-        if (m_write_buffer->readAble() == 0) {
+        if (this->m_write_buffer->readAble() == 0) {
             DebugLog << "app buffer of fd[" << m_fd << "] no data to write, to yiled this coroutine";
             break;
         }
@@ -241,7 +239,6 @@ void TcpConnection::output()
         int total_size = m_write_buffer->readAble();
         int read_index = m_write_buffer->readIndex();
         int rt         = write_hook(m_fd, &(m_write_buffer->m_buffer[read_index]), total_size);
-        // InfoLog << "write end";
         if (rt <= 0) {
             ErrorLog << "write empty, error=" << strerror(errno);
         }

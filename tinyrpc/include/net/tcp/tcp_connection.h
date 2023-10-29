@@ -2,7 +2,6 @@
 #include "comm/log.h"
 #include "coroutine/coroutine.h"
 #include "net/fd_event.h"
-#include "net/http/http_request.h"
 #include "net/mutex.h"
 #include "net/net_address.h"
 #include "net/reactor.h"
@@ -10,7 +9,6 @@
 #include "net/tcp/io_thread.h"
 #include "net/tcp/tcp_buffer.h"
 #include "net/tcp/tcp_connection_time_wheel.h"
-#include "net/tinypb/tinypb_codec.h"
 #include <memory>
 #include <queue>
 #include <vector>
@@ -32,7 +30,6 @@ class TcpConnection: public std::enable_shared_from_this<TcpConnection> {
 
 public:
     typedef std::shared_ptr<TcpConnection> ptr;
-
     TcpConnection(
         tinyrpc::TcpServer* tcp_svr, tinyrpc::IOThread* io_thread, int fd, int buff_size, NetAddress::ptr peer_addr);
 
