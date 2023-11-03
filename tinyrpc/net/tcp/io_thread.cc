@@ -1,11 +1,11 @@
-#include "tinyrpc/net/tcp/io_thread.h"
-#include "tinyrpc/comm/config.h"
-#include "tinyrpc/coroutine/coroutine.h"
-#include "tinyrpc/coroutine/coroutine_pool.h"
-#include "tinyrpc/net/reactor.h"
-#include "tinyrpc/net/tcp/tcp_connection.h"
-#include "tinyrpc/net/tcp/tcp_connection_time_wheel.h"
-#include "tinyrpc/net/tcp/tcp_server.h"
+#include "net/tcp/io_thread.h"
+#include "comm/config.h"
+#include "coroutine/coroutine.h"
+#include "coroutine/coroutine_pool.h"
+#include "net/reactor.h"
+#include "net/tcp/tcp_connection.h"
+#include "net/tcp/tcp_connection_time_wheel.h"
+#include "net/tcp/tcp_server.h"
 #include <map>
 #include <memory>
 #include <semaphore.h>
@@ -180,12 +180,6 @@ void IOThreadPool::addCoroutineToRandomThread(Coroutine::ptr cor, bool self /* =
         break;
     }
     m_io_threads[i]->getReactor()->addCoroutine(cor, true);
-    // if (m_io_threads[m_index]->getPthreadId() == t_cur_io_thread->getPthreadId()) {
-    //   m_index++;
-    //   if (m_index == m_size || m_index == -1) {
-    //     m_index = 0;
-    //   }
-    // }
 }
 
 Coroutine::ptr IOThreadPool::addCoroutineToRandomThread(std::function<void()> cb, bool self /* = false*/)

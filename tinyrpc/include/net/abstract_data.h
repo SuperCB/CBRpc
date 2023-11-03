@@ -1,6 +1,4 @@
-#ifndef TINYRPC_NET_ABSTRACT_DATA_H
-#define TINYRPC_NET_ABSTRACT_DATA_H
-
+#pragma once
 namespace tinyrpc {
 
 class AbstractData {
@@ -13,5 +11,3 @@ public:
 };
 
 }  // namespace tinyrpc
-
-#endif

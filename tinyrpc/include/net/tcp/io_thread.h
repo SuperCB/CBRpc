@@ -1,6 +1,4 @@
-#ifndef TINYRPC_NET_TCP_IO_THREAD_H
-#define TINYRPC_NET_TCP_IO_THREAD_H
-
+#pragma once
 #include "coroutine/coroutine.h"
 #include "net/reactor.h"
 #include "net/tcp/tcp_connection_time_wheel.h"
@@ -90,5 +88,3 @@ private:
 };
 
 }  // namespace tinyrpc
-
-#endif

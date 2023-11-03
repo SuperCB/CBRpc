@@ -1,12 +1,10 @@
-#ifndef TINYRPC_NET_TCP_TCP_CLIENT_H
-#define TINYRPC_NET_TCP_TCP_CLIENT_H
-
-#include "tinyrpc/coroutine/coroutine.h"
-#include "tinyrpc/coroutine/coroutine_hook.h"
-#include "tinyrpc/net/abstract_codec.h"
-#include "tinyrpc/net/net_address.h"
-#include "tinyrpc/net/reactor.h"
-#include "tinyrpc/net/tcp/tcp_connection.h"
+#pragma once
+#include "coroutine/coroutine.h"
+#include "coroutine/coroutine_hook.h"
+#include "net/abstract_codec.h"
+#include "net/net_address.h"
+#include "net/reactor.h"
+#include "net/tcp/tcp_connection.h"
 #include <google/protobuf/service.h>
 #include <memory>
 
@@ -82,5 +80,3 @@ private:
 };
 
 }  // namespace tinyrpc
-
-#endif

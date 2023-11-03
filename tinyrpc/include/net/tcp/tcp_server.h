@@ -4,8 +4,6 @@
 #include "net/abstract_codec.h"
 #include "net/abstract_dispatcher.h"
 #include "net/fd_event.h"
-#include "net/http/http_dispatcher.h"
-#include "net/http/http_servlet.h"
 #include "net/net_address.h"
 #include "net/reactor.h"
 #include "net/tcp/io_thread.h"

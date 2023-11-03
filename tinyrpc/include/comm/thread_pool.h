@@ -1,41 +1,34 @@
-#ifndef TINYRPC_THREAD_THRFEADPOOL_H
-#define TINYRPC_THREAD_THRFEADPOOL_H
-
+#pragma once
+#include "net/mutex.h"
+#include <functional>
 #include <pthread.h>
 #include <queue>
-#include <functional>
-#include "tinyrpc/net/mutex.h"
 
 namespace tinyrpc {
 
 class ThreadPool {
- public:
-  ThreadPool(int size);
+public:
+    ThreadPool(int size);
 
-  ~ThreadPool();
+    ~ThreadPool();
 
-  void start();
+    void start();
 
-  void stop();
+    void stop();
 
-  void addTask(std::function<void()> cb);
+    void addTask(std::function<void()> cb);
 
- private:
-  static void* MainFunction(void* ptr);
+private:
+    static void* MainFunction(void* ptr);
 
+public:
+    int                               m_size{0};
+    std::vector<pthread_t>            m_threads;
+    std::queue<std::function<void()>> m_tasks;
 
- public:
-  int m_size {0};
-  std::vector<pthread_t> m_threads;
-  std::queue<std::function<void()>> m_tasks;
-
-  Mutex m_mutex;
-  pthread_cond_t m_condition;
-  bool m_is_stop {false};
+    Mutex          m_mutex;
+    pthread_cond_t m_condition;
+    bool           m_is_stop{false};
 };
 
-}
-
-
-
-#endif
+}  // namespace tinyrpc

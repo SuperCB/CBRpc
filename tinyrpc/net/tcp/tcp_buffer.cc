@@ -1,5 +1,5 @@
-#include "tinyrpc/net/tcp/tcp_buffer.h"
-#include "tinyrpc/comm/log.h"
+#include "net/tcp/tcp_buffer.h"
+#include "comm/log.h"
 #include <string.h>
 #include <unistd.h>
 

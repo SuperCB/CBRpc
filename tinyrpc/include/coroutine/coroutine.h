@@ -27,7 +27,7 @@ public:
 
     ~Coroutine();
 
-    bool setCallBack(std::function<void()> cb);
+    bool setCallBack(std::function<void()> call_back);
 
     int getCorId() const
     {

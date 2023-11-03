@@ -1,6 +1,7 @@
 #pragma once
 #include "comm/log.h"
 #include "coroutine/coroutine.h"
+#include "net/abstract_codec.h"
 #include "net/fd_event.h"
 #include "net/mutex.h"
 #include "net/net_address.h"

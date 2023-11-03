@@ -1,9 +1,9 @@
-#include "tinyrpc/net/tinypb/tinypb_codec.h"
-#include "tinyrpc/comm/log.h"
-#include "tinyrpc/comm/msg_req.h"
-#include "tinyrpc/net/abstract_data.h"
-#include "tinyrpc/net/byte.h"
-#include "tinyrpc/net/tinypb/tinypb_data.h"
+#include "net/tinypb/tinypb_codec.h"
+#include "comm/log.h"
+#include "comm/msg_req.h"
+#include "net/abstract_data.h"
+#include "net/byte.h"
+#include "net/tinypb/tinypb_data.h"
 #include <algorithm>
 #include <memory>
 #include <sstream>
@@ -46,7 +46,6 @@ void TinyPbCodeC::encode(TcpBuffer* buf, AbstractData* data)
         free((void*)re);
         re = NULL;
     }
-    // DebugLog << "test encode end";
 }
 
 const char* TinyPbCodeC::encodePbData(TinyPbStruct* data, int& len)

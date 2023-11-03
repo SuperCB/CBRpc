@@ -3,8 +3,6 @@
 #include "coroutine/coroutine.h"
 #include "coroutine/coroutine_hook.h"
 #include "coroutine/coroutine_pool.h"
-#include "net/http/http_codec.h"
-#include "net/http/http_dispatcher.h"
 #include "net/tcp/io_thread.h"
 #include "net/tcp/tcp_connection.h"
 #include "net/tcp/tcp_connection_time_wheel.h"
@@ -110,20 +108,13 @@ int TcpAcceptor::toAccept()
     return rt;
 }
 
-TcpServer::TcpServer(NetAddress::ptr addr, ProtocalType type /*= TinyPb_Protocal*/): m_addr(addr)
+TcpServer::TcpServer(NetAddress::ptr addr, ProtocalType type): m_addr(addr)
 {
 
-    m_io_pool = std::make_shared<IOThreadPool>(gRpcConfig->m_iothread_num);
-    if (type == Http_Protocal) {
-        m_dispatcher    = std::make_shared<HttpDispacther>();
-        m_codec         = std::make_shared<HttpCodeC>();
-        m_protocal_type = Http_Protocal;
-    }
-    else {
-        m_dispatcher    = std::make_shared<TinyPbRpcDispacther>();
-        m_codec         = std::make_shared<TinyPbCodeC>();
-        m_protocal_type = TinyPb_Protocal;
-    }
+    m_io_pool       = std::make_shared<IOThreadPool>(gRpcConfig->m_iothread_num);
+    m_dispatcher    = std::make_shared<TinyPbRpcDispacther>();
+    m_codec         = std::make_shared<TinyPbCodeC>();
+    m_protocal_type = TinyPb_Protocal;
 
     m_main_reactor = tinyrpc::Reactor::GetReactor();
     m_main_reactor->setReactorType(MainReactor);
@@ -174,11 +165,6 @@ void TcpServer::MainAcceptCorFunc()
         TcpConnection::ptr conn      = addClient(io_thread, fd);
         conn->initServer();
         DebugLog << "tcpconnection address is " << conn.get() << ", and fd is" << fd;
-
-        // auto cb = [io_thread, conn]() mutable {
-        //   io_thread->addClient(conn.get());
-        // 	conn.reset();
-        // };
 
         io_thread->getReactor()->addCoroutine(conn->getCoroutine());
         m_tcp_counts++;

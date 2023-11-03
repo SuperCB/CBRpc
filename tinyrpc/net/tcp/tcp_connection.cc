@@ -84,8 +84,6 @@ TcpConnection::~TcpConnection()
 
 void TcpConnection::initBuffer(int size)
 {
-
-    // 初始化缓冲区大小
     m_write_buffer = std::make_shared<TcpBuffer>(size);
     m_read_buffer  = std::make_shared<TcpBuffer>(size);
 }
