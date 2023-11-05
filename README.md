@@ -1,9 +1,3 @@
-![](https://img.shields.io/github/v/release/Gooddbird/tinyrpc?color=2&label=tinyrpc&logoColor=2&style=plastic) ![GitHub repo size](https://img.shields.io/github/repo-size/Gooddbird/tinyrpc?style=plastic) ![GitHub issues](https://img.shields.io/github/issues/Gooddbird/tinyrpc?style=plastic) ![GitHub pull requests](https://img.shields.io/github/issues-pr/Gooddbird/tinyrpc?style=plastic) ![GitHub forks](https://img.shields.io/github/forks/Gooddbird/tinyrpc?style=plastic) ![GitHub Repo stars](https://img.shields.io/github/stars/Gooddbird/tinyrpc?style=plastic) ![GitHub contributors](https://img.shields.io/github/contributors/Gooddbird/tinyrpc?style=plastic) ![GitHub last commit](https://img.shields.io/github/last-commit/Gooddbird/tinyrpc)
-
-
-作者：**ikerli**  **2022-05-13**
-**使用 TinyRPC, 轻松地构建高性能分布式 RPC 服务！**
-
 <!-- TOC -->
 
 - [1. 概述](#1-概述)
@@ -56,11 +50,6 @@
     - [5.5.1. TinyPB 协议报文格式分解](#551-tinypb-协议报文格式分解)
   - [5.6. Http 模块](#56-http-模块)
   - [5.7. RPC 调用封装](#57-rpc-调用封装)
-- [6. 错误码](#6-错误码)
-  - [6.1. 错误码判断规范](#61-错误码判断规范)
-  - [6.2. 错误码释义文档](#62-错误码释义文档)
-- [7. 问题反馈](#7-问题反馈)
-- [8. 参考资料](#8-参考资料)
 
 <!-- /TOC -->
 
@@ -242,35 +231,6 @@ Transfer/sec:     26.67MB
 
 推荐安装版本 **3.19.4** 及以上。安装过程不再赘述, **注意将头文件和库文件 copy 到对应的系统路径下。**
 
-### 3.1.2. tinyxml
-由于 **TinyRPC** 读取配置使用了 **xml** 文件，因此需要安装 **tinyxml** 库来解析配置文件。
-
-下载地址：https://sourceforge.net/projects/tinyxml/
-
-要生成 libtinyxml.a 静态库，需要简单修改 makefile 如下:
-```
-# 84 行修改为如下
-OUTPUT := libtinyxml.a 
-
-# 194, 105 行修改如下
-${OUTPUT}: ${OBJS}
-	${AR} $@ ${LDFLAGS} ${OBJS} ${LIBS} ${EXTRA_LIBS}
-```
-安装过程如下：
-```
-cd tinyxml
-make -j4
-
-# copy 库文件到系统库文件搜索路径下
-cp libtinyxml.a /usr/lib/
-
-# copy 头文件到系统头文件搜索路径下 
-mkdir /usr/include/tinyxml
-cp *.h /usr/include/tinyxml
-```
-
-
-## 3.2. 安装和卸载 (makefile)
 
 ### 3.2.1. 安装 TinyRPC
 在安装了前置的几个库之后，就可以开始编译和安装 **TinyRPC** 了。安装过程十分简单，只要不出什么意外就好了。
@@ -298,39 +258,6 @@ make install
 注意, make install 完成后，默认会在 **/usr/lib** 路径下安装 **libtinyrpc.a** 静态库文件，以及在 **/usr/include/tinyrpc** 下安装所有的头文件。
 
 如果编译出现问题，欢迎提 [issue](https://github.com/Gooddbird/tinyrpc/issues/), 我会尽快回应。
-
-### 3.2.2. 卸载 TinyRPC
-卸载也很简单，如下即可：
-```
-make uninstall
-```
-**注：如果此前已经安装过 TinyRPC, 建议先执行卸载命令后再重新 make install 安装.**
-
-## 3.3. 安装和卸载 (cmake)
-### 3.3.1. 安装 TinyRPC
-```shell
-$ git clone https://github.com/Gooddbird/tinyrpc
-
-# 需要先生成 pb 文件
-$ cd tinyrpc/testcases
-$ protoc --cpp_out=./ test_tinypb_server.proto
-
-$ cd ..
-$ mkdir bin && mkdir lib && mkdir build
-
-# 安装
-$ sudo ./build.sh
-```
-
-`build.sh` 也是通过 `cmake` 安装的，当然你也可以手动通过 `cmake` 去创建
-
-### 3.3.2. 卸载 TinyRPC
-```shell
-$ sudo rm -rf /usr/include/tinyrpc/
-$ sudo rm -rf /usr/lib/libtinyrpc.a
-
-# 如果没有更改 makefile 中和 CMakeLists 中的 头文件 和 静态库 的存储路径的话，也可以直接执行：make uninstall
-```
 
 # 4. 快速上手
 ## 4.1. 搭建基于 TinyPB 协议的 RPC 服务
@@ -375,61 +302,6 @@ service QueryService {
 使用 protoc 工具生成对应的 C++ 代码：
 ```
 protoc --cpp_out=./ test_tinypb_server.proto
-```
-
-### 4.1.2. 准备配置文件
-**TinyRPC** 读取标准的 **xml** 配置文件完成一些服务初始化设置，这个配置文件模板如下，一般只需要按需调整参数即可：
-```xml
-<?xml version="1.0" encoding="UTF-8" ?>
-<root>
-  <!--log config-->
-  <log>
-    <!--identify path of log file-->
-    <log_path>./</log_path>
-    <log_prefix>test_tinypb_server</log_prefix>
-
-    <!--identify max size of single log file, MB-->
-    <log_max_file_size>5</log_max_file_size>
-
-    <!--log level: DEBUG < INFO < WARN < ERROR-->
-    <rpc_log_level>DEBUG</rpc_log_level>
-    <app_log_level>DEBUG</app_log_level>
-
-    <!--inteval that put log info to async logger, ms-->
-    <log_sync_inteval>500</log_sync_inteval>
-  </log>
-
-  <coroutine>
-    <!--coroutine stack size (KB)-->
-    <coroutine_stack_size>256</coroutine_stack_size>
-
-    <!--default coroutine pool size-->
-    <coroutine_pool_size>1000</coroutine_pool_size>
-
-  </coroutine>
-
-  <msg_req_len>20</msg_req_len>
-
-  <!--max time when call connect, s-->
-  <max_connect_timeout>75</max_connect_timeout>
-
-  <!--count of io threads, at least 1-->
-  <iothread_num>8</iothread_num>
-
-  <time_wheel>
-    <bucket_num>6</bucket_num>
-
-    <!--inteval that destroy bad TcpConnection, s-->
-    <inteval>10</inteval>
-  </time_wheel>
-
-  <server>
-    <ip>127.0.0.1</ip>
-    <port>39999</port>
-    <!--注意这里选择 TinyPB 协议-->
-    <protocal>TinyPB</protocal>
-  </server>
-</root>
 ```
 
 ### 4.1.3. 实现业务接口
@@ -503,120 +375,7 @@ netstat -tln | grep 39999
 
 
 ## 4.2. 搭建基于 HTTP 协议的 RPC 服务
-### 4.2.1. 准备配置文件
-同上，准备一个配置文件 **test_http_server.xml**:
-```xml
-<?xml version="1.0" encoding="UTF-8" ?>
-<root>
-  <!--log config-->
-  <log>
-    <!--identify path of log file-->
-    <log_path>./</log_path>
-    <log_prefix>test_http_server</log_prefix>
 
-    <!--identify max size of single log file, MB-->
-    <log_max_file_size>5</log_max_file_size>
-
-    <!--log level: DEBUG < INFO < WARN < ERROR < NONE(don't print log)-->
-    <rpc_log_level>DEBUG</rpc_log_level>
-    <app_log_level>DEBUG</app_log_level>
-
-    <!--inteval that put log info to async logger, ms-->
-    <log_sync_inteval>500</log_sync_inteval>
-  </log>
-
-  <coroutine>
-    <!--coroutine stack size (KB)-->
-    <coroutine_stack_size>128</coroutine_stack_size>
-
-    <!--default coroutine pool size-->
-    <coroutine_pool_size>1000</coroutine_pool_size>
-
-  </coroutine>
-
-  <msg_req_len>20</msg_req_len>
-
-  <!--max time when call connect, s-->
-  <max_connect_timeout>75</max_connect_timeout>
-
-  <!--count of io threads, at least 1-->
-  <iothread_num>4</iothread_num>
-
-  <time_wheel>
-    <bucket_num>3</bucket_num>
-
-    <!--inteval that destroy bad TcpConnection, s-->
-    <inteval>10</inteval>
-  </time_wheel>
-
-  <server>
-    <ip>127.0.0.1</ip>
-    <port>19999</port>
-    <!--这里选择 HTTP-->
-    <protocal>HTTP</protocal>
-  </server>
-
-</root>
-
-```
-
-### 4.2.2. 实现 Servlet 接口
-**TinyRPC** 提供类似 JAVA 的 **Servlet** 接口来实现 HTTP 服务。你只需要简单的继承 HttpServlet 类并实现 handle 方法即可，如一个 HTTP 的 echo 如下：
-```c++
-// test_http_server.cc
-class QPSHttpServlet : public tinyrpc::HttpServlet {
- public:
-  QPSHttpServlet() = default;
-  ~QPSHttpServlet() = default;
-
-  void handle(tinyrpc::HttpRequest* req, tinyrpc::HttpResponse* res) {
-    AppDebugLog << "QPSHttpServlet get request";
-    setHttpCode(res, tinyrpc::HTTP_OK);
-    setHttpContentType(res, "text/html;charset=utf-8");
-
-    std::stringstream ss;
-    ss << "QPSHttpServlet Echo Success!! Your id is," << req->m_query_maps["id"];
-    char buf[512];
-    sprintf(buf, html, ss.str().c_str());
-    setHttpBody(res, std::string(buf));
-    AppDebugLog << ss.str();
-  }
-
-  std::string getServletName() {
-    return "QPSHttpServlet";
-  }
-};
-```
-
-### 4.2.3. 启动 RPC 服务
-将 Servlet 注册到路径下，启动 RPC 服务即可。注意这个注册路径相对于项目的根路径而言：
-```c++
-// test_http_server.cc
-int main(int argc, char* argv[]) {
-  if (argc != 2) {
-    printf("Start TinyRPC server error, input argc is not 2!");
-    printf("Start TinyRPC server like this: \n");
-    printf("./server a.xml\n");
-    return 0;
-  }
-
-  tinyrpc::InitConfig(argv[1]);
-
-  // 访问 http://127.0.0.1:19999/qps, 即对应 QPSHttpServlet 这个接口
-  REGISTER_HTTP_SERVLET("/qps", QPSHttpServlet);
-  tinyrpc::StartRpcServer();
-  return 0;
-}
-```
-启动命令同样如下：
-```
-nohup ./test_http_server ../conf/test_http_server.xml &
-```
-使用 curl 工具可以测试 HTTP 服务是否启动成功：
-```
-[ikerli@localhost bin]$ curl -X GET 'http://127.0.0.1:19999/qps?id=1'
-<html><body><h1>Welcome to TinyRPC, just enjoy it!</h1><p>QPSHttpServlet Echo Success!! Your id is,1</p></body></html>
-```
 
 ## 4.3. RPC 服务调用
 这一节将使用 test_http_server 服务调用 test_rpc_server，前面说过，TinyRPC 支持两种 RPC 调用方式：**阻塞协程式异步调用** 和 **非阻塞协程式异步调用**
@@ -1098,79 +857,3 @@ char end;                           // 代表报文结束，一般是 0x03
 
 另外，**TinyPb** 协议里面所有的 int 类型的字段在编码时都会先转为**网络字节序**！
 
-
-## 5.6. Http 模块
-TinyRPC 的 HTTP 模块实际上有点模仿 Java 的 Servlet 概念，每来一个 HTTP 请求就会找到对应的 HttpServlet 对象，执行其提前注册好的业务逻辑函数，用于处理 Http 请求，并回执 Http 响应。
-
-## 5.7. RPC 调用封装
---建设中，敬请期待--
-
-
-
-# 6. 错误码
-## 6.1. 错误码判断规范
-**TinyPB** 协议使用错误码来标识 RPC 调用过程的那些不可控的错误。这些错误码是框架级错误码，当出现这些错误码时，说明是 RPC 调用的链路出了问题。自然，这次 RPC 调用是失败的。
-一般来说，在调用 RPC 时，需要判断两个错误码，例如：
-```c++
-stub.query_name(&rpc_controller, &rpc_req, &rpc_res, NULL);
-// 判断框架级别错误码
-if (rpc_controller.ErrorCode() != 0) {
-  ErrorLog << "failed to call QueryServer rpc server";
-  // ....
-  return;
-}
-// 判断业务错误码
-if (rpc_res.ret_code() != 0) {
-  // ...
-  return;
-}
-```
-
-
-rpc_controller.ErrorCode 是 RPC **框架级错误码**，即这个文档里面锁描述的东西。该错误码的枚举值已经被定义好如下表格，一般情况下不会变更。当此错误码不为0时，请检查 RPC 通信链路是否有问题，网络连接是否有异常。当然，TinyPB 协议里面的 err_info 字段也会详细的描述错误信息。
-
-另一个错误码是**业务错误码**，通常他被定义在 RPC 方法返回结构体的第一个字段中。出现这个错误码一般是对端在进行业务处理时出现了非预期的结果，此时将返回对应的错误码和错误信息。这个错误码的枚举值应由 RPC 通信双方自行约定。
-
-## 6.2. 错误码释义文档
-err_code 详细说明如下表：
-
-|  **错误码** | **错误代码** | **错误码描述** |
-|  ----  | ----  | ---- |
-| ERROR_PEER_CLOSED | 10000000 | connect 时对端关闭，一般是对端没有进程在监听此端口 |
-| ERROR_FAILED_CONNECT | 10000001 | connect 失败|
-| ERROR_FAILED_GET_REPLY | 10000002 | RPC 调用未收到对端回包数据 |
-| ERROR_FAILED_DESERIALIZE | 10000003 | 反序列化失败，这种情况一般是 TinyPb 里面的 pb_data 有问题 |
-| ERROR_FAILED_SERIALIZE | 10000004 | 序列化失败|
-| ERROR_FAILED_ENCODE | 10000005 | 编码失败 |
-| ERROR_FAILED_DECODE | 10000006 |  解码失败|
-| ERROR_RPC_CALL_TIMEOUT | 10000007 | 调用 RPC 超时, 这种情况请检查下 RPC 的超时时间是否太短 |
-| ERROR_SERVICE_NOT_FOUND | 10000008 | Service 不存在，即对方没有注册这个 Service |
-| ERROR_METHOD_NOT_FOUND | 10000009 | Method 不存在，对方没有这个 方法|
-| ERROR_PARSE_SERVICE_NAME | 10000010 | 解析 service_name 失败|
-| ERROR_NOT_SET_ASYNC_PRE_CALL | 10000011 | 非阻塞协程式 RPC 调用前没保存对象 |
-
-
-# 7. 问题反馈
-- 交流群：**260423934**
-- 邮箱地址：**1753009868@qq.com**
-- 知乎：知乎搜索 **ikerli**
-
-如果您愿意支援一点电费，不胜感激！
-
-![](./imgs/mine/wechatpay.png)(wechat pay) &nbsp; ![](./imgs/mine/alipay.png)(alipay)  
-
-
-
-
-
-
-# 8. 参考资料
-libco: https://github.com/Tencent/libco
-
-sylar: https://github.com/sylar-yin/sylar
-
-muduo: https://github.com/chenshuo/muduo
-
-tinyxml: https://github.com/leethomason/tinyxml2
-
-protobuf: https://github.com/protocolbuffers/protobuf
